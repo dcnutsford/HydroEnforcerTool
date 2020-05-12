@@ -6,12 +6,15 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <title>Switch view from 2D to 3D - 4.15</title>
+    <title>The Hydro Enforcer - v1</title>
+
+    <link rel="stylesheet" href="style.css">
 
     <style>
       html,
       body,
       #viewDiv {
+        position: absolute;
         padding: 0;
         margin: 0;
         height: 100%;
@@ -42,8 +45,12 @@
         "esri/views/SceneView",
         "esri/WebMap",
         "esri/WebScene",
-        "esri/widgets/Editor"
-      ], function(MapView, SceneView, WebMap, WebScene, Editor) {
+        "esri/widgets/Editor",
+        "esri/widgets/Expand", 
+        "esri/widgets/LayerList",
+        "esri/widgets/Slider", 
+        "esri/widgets/FeatureTable"
+      ], function(MapView, SceneView, WebMap, WebScene, Editor, Expand, LayerList, Slider, FeatureTable) {
         var switchButton = document.getElementById("switch-btn");
 
         var appConfig = {
@@ -85,30 +92,102 @@
           switchView();
         });
 
-        appConfig.mapView.when(function() {
-            appConfig.mapView.popup.autoOpenEnabled = false; //disable popups
-          // Create the Editor
-          var editor = new Editor({
-            view: appConfig.mapView
-          });
-          // Add widget to top-right of the view
-          appConfig.mapView.ui.add(editor, "top-right");
-
-        });
-
-
+        //Configure Popups
         appConfig.sceneView.popup.autoOpenEnabled = false; //disable popups
+        appConfig.mapView.popup.autoOpenEnabled = false; //disable popups  
+
+        //Configure Labels
         
-        
-        // Create the Editor
-        var editor = new Editor({
+        //Create 3D Widgets
+        // Create the 3D Editor
+        var editor_3d = new Editor({
           view: appConfig.sceneView
         });
         // Add widget to top-right of the view
-        appConfig.sceneView.ui.add(editor, "top-right");
+        appConfig.sceneView.ui.add(editor_3d, "top-right");
 
+        // Create the 3D Layer List
+        var layerList_3d = new LayerList({
+          view: appConfig.sceneView,
+          container: document.createElement("div"),
+          listItemCreatedFunction: function(event){
+          const ToggleLayers_3d = event.item;
+          ToggleLayers_3d.actionsSections = [
+            [
+                {
+                title: "Labels On",
+                className: "esri-icon-labels",
+                id: "labels"
+                }
+            ]
+          ];
+        }
+        });
+
+        var layerListExpand_3d = new Expand({
+          view: appConfig.sceneView,
+          content: layerList_3d
+        });     
+        
+        appConfig.sceneView.ui.add(layerListExpand_3d, "top-left");
+        
+        layerList_3d.on("trigger-action", function(event) {
+        if (event.action.id === "labels") {
+          if (event.item.layer.labelsVisible  === false) {
+            event.item.layer.labelsVisible = true;
+            event.action.title = "Labels uitzetten";
+          } else {
+            event.item.layer.labelsVisible = false;
+            event.action.title = "Labels On";
+          }
+        }
+      });     
+        //Create 2D Widgets
+        // Create the 2D Editor
+        var editor_2d = new Editor({
+            view: appConfig.mapView
+        });
+          // Add widget to top-right of the view
+          appConfig.mapView.ui.add(editor_2d, "top-right");
+
+        // Create the 2D Layer List
+        var layerList_2d = new LayerList({
+          view: appConfig.mapView,
+          listItemCreatedFunction: function(event){
+          const ToggleLayers_2d = event.item;
+          ToggleLayers_2d.actionsSections = [
+            [
+                {
+                title: "Turn Labels Off",
+                className: "esri-icon-labels",
+                id: "labels"
+                }
+            ]
+          ];
+        }
+        });
+
+        var layerListExpand_2d = new Expand({
+          view: appConfig.mapView,
+          content: layerList_2d
+        });
+        appConfig.mapView.ui.add(layerListExpand_2d, "top-left");
+
+        layerList_2d.on("trigger-action", function(event) {
+        if (event.action.id === "labels") {
+          if (event.item.layer.labelsVisible  === false) {
+            event.item.layer.labelsVisible = true;
+            event.action.title = "Turn Labels Off";
+          } else {
+            event.item.layer.labelsVisible = false;
+            event.action.title = "Turn Labels On";
+          }
+        }
+      });     
       
 
+ 
+        // Functions
         // Switches the view from 2D to 3D and vice versa
         function switchView() {
           var is3D = appConfig.activeView.type === "3d";
@@ -158,14 +237,16 @@
   </head>
 
   <body>
-    <div id="viewDiv"></div>
-    <div id="infoDiv">
-      <input
-        class="esri-component esri-widget--button esri-widget esri-interactive"
-        type="button"
-        id="switch-btn"
-        value="3D"
-      />
-    </div>
+
+  <div id="viewDiv">
+      <div id="infoDiv">
+        <input
+          class="esri-component esri-widget--button esri-widget esri-interactive"
+          type="button"
+          id="switch-btn"
+          value="3D"
+        />
+      </div>
+  </div>
   </body>
 </html>
